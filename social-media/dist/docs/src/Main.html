@@ -1,0 +1,699 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">{-|
+Module      : Main
+Description : Create a common box, store data on many threads, and have 10 userlist.
+License     : GPL-3
+-}</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Main</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Types.html"><span class="hs-identifier">Types</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Random</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Concurrent</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Concurrent</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">takeMVar</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Types.html"><span class="hs-identifier">Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Types.html#User"><span class="hs-identifier">User</span></a></span><span class="hs-special">(</span><span class="annot"><a href="Types.html#msgCount"><span class="hs-identifier">msgCount</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.IO.Unsafe</span></span><span>  </span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MessagesSent.html"><span class="hs-identifier">MessagesSent</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- | Make 10 users, put them in an array, then make a thread for each of them and call messages. Once we have an emtpy box, we will terminate the execution using the messagesSent.hs file's Sent method.</span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Main.html#main"><span class="hs-identifier hs-type">main</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span id="main"><span class="annot"><span class="annottext">main :: IO ()
+</span><a href="Main.html#main"><span class="hs-identifier hs-var hs-var">main</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-comment">-- For purposes of counting, msg'no&#160;is used.</span><span>
+</span><span id="line-24"></span><span>    </span><span id="local-6989586621679029724"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029724"><span class="hs-identifier hs-var">msg1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-25"></span><span>    </span><span id="local-6989586621679029722"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029722"><span class="hs-identifier hs-var">msg2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-26"></span><span>    </span><span id="local-6989586621679029721"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029721"><span class="hs-identifier hs-var">msg3</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-27"></span><span>    </span><span id="local-6989586621679029720"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029720"><span class="hs-identifier hs-var">msg4</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-28"></span><span>    </span><span id="local-6989586621679029719"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029719"><span class="hs-identifier hs-var">msg5</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-29"></span><span>    </span><span id="local-6989586621679029718"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029718"><span class="hs-identifier hs-var">msg6</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-30"></span><span>    </span><span id="local-6989586621679029717"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029717"><span class="hs-identifier hs-var">msg7</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-31"></span><span>    </span><span id="local-6989586621679029716"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029716"><span class="hs-identifier hs-var">msg8</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-32"></span><span>    </span><span id="local-6989586621679029715"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029715"><span class="hs-identifier hs-var">msg9</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-33"></span><span>    </span><span id="local-6989586621679029714"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029714"><span class="hs-identifier hs-var">msg10</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-comment">--usr'no are represented by their list of messages and userlist contains all users' names. Each user has a list of 10 unique messages.</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029713"><span class="annot"><span class="annottext">usr1 :: User
+</span><a href="#local-6989586621679029713"><span class="hs-identifier hs-var hs-var">usr1</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Chandrima&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029724"><span class="hs-identifier hs-var">msg1</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Chandrima&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is London?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it cold out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are your classes going?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029711"><span class="annot"><span class="annottext">usr2 :: User
+</span><a href="#local-6989586621679029711"><span class="hs-identifier hs-var hs-var">usr2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Chandrani&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029722"><span class="hs-identifier hs-var">msg2</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Chandrani&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Hyderabad?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it hot out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your studies going?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029710"><span class="annot"><span class="annottext">usr3 :: User
+</span><a href="#local-6989586621679029710"><span class="hs-identifier hs-var hs-var">usr3</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Vikas&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029721"><span class="hs-identifier hs-var">msg3</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Vikas&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Bangalore?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it foggy out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your work going?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029709"><span class="annot"><span class="annottext">usr4 :: User
+</span><a href="#local-6989586621679029709"><span class="hs-identifier hs-var hs-var">usr4</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Jyoti&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029720"><span class="hs-identifier hs-var">msg4</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Jyoti&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it raining out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;What's up in your work life?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029708"><span class="annot"><span class="annottext">usr5 :: User
+</span><a href="#local-6989586621679029708"><span class="hs-identifier hs-var hs-var">usr5</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Rahul&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029719"><span class="hs-identifier hs-var">msg5</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Rahul&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Bangalore?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it foggy out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;What's up&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029707"><span class="annot"><span class="annottext">usr6 :: User
+</span><a href="#local-6989586621679029707"><span class="hs-identifier hs-var hs-var">usr6</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Kajal&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029718"><span class="hs-identifier hs-var">msg6</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Kajal&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi!!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it raining out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is everyone at home?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029706"><span class="annot"><span class="annottext">usr7 :: User
+</span><a href="#local-6989586621679029706"><span class="hs-identifier hs-var hs-var">usr7</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Mousumi&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029717"><span class="hs-identifier hs-var">msg7</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Mousumi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it raining out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is work going?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029705"><span class="annot"><span class="annottext">usr8 :: User
+</span><a href="#local-6989586621679029705"><span class="hs-identifier hs-var hs-var">usr8</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Seema&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029716"><span class="hs-identifier hs-var">msg8</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Seema&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it foggy out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is life?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029704"><span class="annot"><span class="annottext">usr9 :: User
+</span><a href="#local-6989586621679029704"><span class="hs-identifier hs-var hs-var">usr9</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Satya&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029715"><span class="hs-identifier hs-var">msg9</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Satya&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it cold out there?&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;What's going on in life?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029703"><span class="annot"><span class="annottext">usr10 :: User
+</span><a href="#local-6989586621679029703"><span class="hs-identifier hs-var hs-var">usr10</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; MVar Integer -&gt; [String] -&gt; User
+</span><a href="Types.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Dipali&quot;</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029714"><span class="hs-identifier hs-var">msg10</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;This is Dipali&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hi&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hello!!!&quot;</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How are you!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Hope you are doing well!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is the weather!&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is Kharagpur?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Is it hot out there?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;What's going on?&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;How is your health?&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029702"><span class="annot"><span class="annottext">userlist :: [User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var hs-var">userlist</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029713"><span class="hs-identifier hs-var">usr1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029711"><span class="hs-identifier hs-var">usr2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029710"><span class="hs-identifier hs-var">usr3</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029709"><span class="hs-identifier hs-var">usr4</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029708"><span class="hs-identifier hs-var">usr5</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029707"><span class="hs-identifier hs-var">usr6</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029706"><span class="hs-identifier hs-var">usr7</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029705"><span class="hs-identifier hs-var">usr8</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029704"><span class="hs-identifier hs-var">usr9</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029703"><span class="hs-identifier hs-var">usr10</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-46"></span><span>    </span><span id="local-6989586621679029701"><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (MVar Integer)
+forall a. a -&gt; IO (MVar a)
+</span><span class="hs-identifier hs-var">newMVar</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-47"></span><span>    </span><span id="local-6989586621679029700"><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (MVar String)
+forall a. IO (MVar a)
+</span><span class="hs-identifier hs-var">newEmptyMVar</span></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-comment">--For concurrent use, make threads for each user. sadasd</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029713"><span class="hs-identifier hs-var">usr1</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029711"><span class="hs-identifier hs-var">usr2</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029710"><span class="hs-identifier hs-var">usr3</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029709"><span class="hs-identifier hs-var">usr4</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029708"><span class="hs-identifier hs-var">usr5</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029707"><span class="hs-identifier hs-var">usr6</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029706"><span class="hs-identifier hs-var">usr7</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029705"><span class="hs-identifier hs-var">usr8</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029704"><span class="hs-identifier hs-var">usr9</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; IO ThreadId
+</span><span class="hs-identifier hs-var">forkIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ThreadId) -&gt; IO () -&gt; IO ThreadId
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+forall a.
+(Ord a, Num a) =&gt;
+MVar a -&gt; User -&gt; [User] -&gt; MVar String -&gt; IO ()
+</span><a href="MessagesSent.html#messagesSent"><span class="hs-identifier hs-var">messagesSent</span></a></span><span> </span><span class="annot"><span class="annottext">MVar Integer
+</span><a href="#local-6989586621679029701"><span class="hs-identifier hs-var">messagesCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029703"><span class="hs-identifier hs-var">usr10</span></a></span><span> </span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-comment">--When w1 is in the &quot;stop&quot; condition, we can show all user information and counts in accordance with our needs.</span><span>
+</span><span id="line-60"></span><span>    </span><span id="local-6989586621679029696"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679029696"><span class="hs-identifier hs-var">w1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar String -&gt; IO String
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="annot"><span class="annottext">MVar String
+</span><a href="#local-6989586621679029700"><span class="hs-identifier hs-var">stop</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;------------------------------------------------------------------------------------------------------------------&quot;</span></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-comment">--The total number of messages a particular user has received is counted using userxcount.</span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679029695"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029695"><span class="hs-identifier hs-var">user1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">readMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029713"><span class="hs-identifier hs-var">usr1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029713"><span class="hs-identifier hs-var">usr1</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029695"><span class="hs-identifier hs-var">user1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>    </span><span id="local-6989586621679029691"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029691"><span class="hs-identifier hs-var">user2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029711"><span class="hs-identifier hs-var">usr2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029711"><span class="hs-identifier hs-var">usr2</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029691"><span class="hs-identifier hs-var">user2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>    </span><span id="local-6989586621679029690"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029690"><span class="hs-identifier hs-var">user3</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029710"><span class="hs-identifier hs-var">usr3</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029710"><span class="hs-identifier hs-var">usr3</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029690"><span class="hs-identifier hs-var">user3</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-69"></span><span>    </span><span id="local-6989586621679029689"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029689"><span class="hs-identifier hs-var">user4</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029709"><span class="hs-identifier hs-var">usr4</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029709"><span class="hs-identifier hs-var">usr4</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029689"><span class="hs-identifier hs-var">user4</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679029688"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029688"><span class="hs-identifier hs-var">user5</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029708"><span class="hs-identifier hs-var">usr5</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029708"><span class="hs-identifier hs-var">usr5</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029688"><span class="hs-identifier hs-var">user5</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-73"></span><span>    </span><span id="local-6989586621679029687"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029687"><span class="hs-identifier hs-var">user6</span></a></span></span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029707"><span class="hs-identifier hs-var">usr6</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029707"><span class="hs-identifier hs-var">usr6</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029687"><span class="hs-identifier hs-var">user6</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-75"></span><span>    </span><span id="local-6989586621679029686"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029686"><span class="hs-identifier hs-var">user7</span></a></span></span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029706"><span class="hs-identifier hs-var">usr7</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029706"><span class="hs-identifier hs-var">usr7</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029686"><span class="hs-identifier hs-var">user7</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-77"></span><span>    </span><span id="local-6989586621679029685"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029685"><span class="hs-identifier hs-var">user8</span></a></span></span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029705"><span class="hs-identifier hs-var">usr8</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029705"><span class="hs-identifier hs-var">usr8</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029685"><span class="hs-identifier hs-var">user8</span></a></span><span class="hs-special">)</span><span> </span><span>
+</span><span id="line-79"></span><span>    </span><span id="local-6989586621679029684"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029684"><span class="hs-identifier hs-var">user9</span></a></span></span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029704"><span class="hs-identifier hs-var">usr9</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029704"><span class="hs-identifier hs-var">usr9</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029684"><span class="hs-identifier hs-var">user9</span></a></span><span class="hs-special">)</span><span>     </span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679029683"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029683"><span class="hs-identifier hs-var">user10</span></a></span></span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">MVar Integer -&gt; IO Integer
+forall a. MVar a -&gt; IO a
+</span><span class="hs-identifier hs-var">takeMVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; MVar Integer
+</span><a href="Types.html#msgCount"><span class="hs-identifier hs-var hs-var">msgCount</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029703"><span class="hs-identifier hs-var">usr10</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Messages received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679029703"><span class="hs-identifier hs-var">usr10</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029683"><span class="hs-identifier hs-var">user10</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;------------------------------------------------------------------------------------------------------------------&quot;</span></span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;100 messages have been exchanged between all users.&quot;</span></span><span>
+</span><span id="line-86"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;------------------------------------------------------------------------------------------------------------------&quot;</span></span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029682"><span class="annot"><span class="annottext">finalMsgsCount :: [Integer]
+</span><a href="#local-6989586621679029682"><span class="hs-identifier hs-var hs-var">finalMsgsCount</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029695"><span class="hs-identifier hs-var">user1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029691"><span class="hs-identifier hs-var">user2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029690"><span class="hs-identifier hs-var">user3</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029689"><span class="hs-identifier hs-var">user4</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029688"><span class="hs-identifier hs-var">user5</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029687"><span class="hs-identifier hs-var">user6</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029686"><span class="hs-identifier hs-var">user7</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029685"><span class="hs-identifier hs-var">user8</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029684"><span class="hs-identifier hs-var">user9</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029683"><span class="hs-identifier hs-var">user10</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-comment">--we just converted type(double) to type(int) and put them all in a list -&gt; finalMsgsCount</span><span>
+</span><span id="line-89"></span><span>    </span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-comment">-- to find the user's name for the person who has been messaged the most.</span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029681"><span class="annot"><span class="annottext">val :: Integer
+</span><a href="#local-6989586621679029681"><span class="hs-identifier hs-var hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Integer] -&gt; Integer
+forall (t :: * -&gt; *) a. (Foldable t, Ord a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">maximum</span></span><span> </span><span class="annot"><span class="annottext">[Integer]
+</span><a href="#local-6989586621679029682"><span class="hs-identifier hs-var">finalMsgsCount</span></a></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679029679"><span class="annot"><span class="annottext">max_usr :: Int
+</span><a href="#local-6989586621679029679"><span class="hs-identifier hs-var hs-var">max_usr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int -&gt; Int
+forall a. HasCallStack =&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromJust</span></span><span> </span><span class="annot"><span class="annottext">(Maybe Int -&gt; Int) -&gt; Maybe Int -&gt; Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; [Integer] -&gt; Maybe Int
+forall a. Eq a =&gt; a -&gt; [a] -&gt; Maybe Int
+</span><span class="hs-identifier hs-var">elemIndex</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029681"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="annot"><span class="annottext">[Integer]
+</span><a href="#local-6989586621679029682"><span class="hs-identifier hs-var">finalMsgsCount</span></a></span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; Most messages have been received by &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="Types.html#name"><span class="hs-identifier hs-var hs-var">name</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[User]
+</span><a href="#local-6989586621679029702"><span class="hs-identifier hs-var">userlist</span></a></span><span> </span><span class="annot"><span class="annottext">[User] -&gt; Int -&gt; User
+forall a. [a] -&gt; Int -&gt; a
+</span><span class="hs-operator hs-var">!!</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679029679"><span class="hs-identifier hs-var">max_usr</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; (&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679029681"><span class="hs-identifier hs-var">val</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;).&quot;</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;------------------------------------------------------------------------------------------------------------------&quot;</span></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span></pre></body></html>
